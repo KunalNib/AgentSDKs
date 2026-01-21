@@ -1,0 +1,16 @@
+{
+  "name": "agents",
+  "version": "1.0.0",
+  "main": "agent.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google/adk": "^0.2.4",
+    "@google/adk-devtools": "^0.2.4",
+    "axios": "^1.13.2"
+  }
+}
