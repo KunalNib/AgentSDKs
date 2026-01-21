@@ -2,6 +2,7 @@
   "name": "agents",
   "version": "1.0.0",
   "main": "agent.js",
+  "type":"module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,6 +12,13 @@
   "dependencies": {
     "@google/adk": "^0.2.4",
     "@google/adk-devtools": "^0.2.4",
-    "axios": "^1.13.2"
+    "axios": "^1.13.2",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.9.36",
+    "@types/node": "^25.0.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }
