@@ -1,4 +1,4 @@
 import "dotenv/config";
-import { LlmAgent } from "@google/adk";
-export declare const triageAgent: LlmAgent;
+import { LoopAgent } from "@google/adk";
+export declare const orchestratedSystem: LoopAgent;
 //# sourceMappingURL=agent.d.ts.map

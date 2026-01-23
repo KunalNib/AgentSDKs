@@ -4,6 +4,8 @@ import {
   LlmAgent,
   Runner,
   InMemorySessionService,
+  AgentTool,
+  LoopAgent
 } from "@google/adk";
 import { z } from "zod";
 import axios from "axios";
@@ -15,6 +17,18 @@ const getCurrentTime = new FunctionTool({
   parameters: z.object({}),
   execute: () => {
     return Date.now().toString();
+  },
+});
+
+
+const taskComplete = new FunctionTool({
+  name: "task_complete",
+  description: "Signals that the user's request has been fully satisfied. Use this to end the session.",
+  parameters: z.object({
+    summary: z.string().describe("Final summary of actions taken"),
+  }),
+  execute: async ({ summary }) => {
+    return `GOAL_REACHED: ${summary}`;
   },
 });
 
@@ -37,7 +51,7 @@ const COOK = new LlmAgent({
   description: "cooking assistant",
   instruction:
     "you are cooking assistant who helps the people in cooking according to their queries and helps them in making dishes and assist them in suggestions",
-  tools: [getCurrentTime, getWeatherDataByCity],
+  tools: [getCurrentTime, getWeatherDataByCity,taskComplete],
 });
 
  const codingAgent = new LlmAgent({
@@ -45,30 +59,45 @@ const COOK = new LlmAgent({
   model: "gemini-2.5-flash",
   description: "coding assistant",
   instruction:`you are a coding assistant you only answer coding questions and help people in solving coding problems`,
-  tools: [],
+  tools: [new AgentTool({ agent: COOK }),taskComplete],
 });
 
 const chatAgent = new LlmAgent({
   name: "chat_Agent",
   model: "gemini-2.5-flash",
     description: "chat Agent",
-    instruction:'you are chatting agent you casual chat with user',
+    instruction:`Respond casually. If you have answered the user fully, call "task_complete".`,
+    tools:[taskComplete],
 });
 
-export const triageAgent = new LlmAgent({
+
+
+ const triageAgent = new LlmAgent({
   name: "Triage_Agent",
   model: "gemini-2.5-flash",
   description: "Triage Agent",
   instruction:  `
-You are a routing agent. 
-    Analyze the user's query and use the transfer tools to send the user to the right expert.
-    - Food/Cooking/Weather -> Transfer to Cook
-    - Programming/Code -> Transfer to coding_agent
-    - Casual Chat -> Transfer to chat_Agent
+You are the Project Manager. Analyze the user's request. 
+If it is a multi-step task (e.g., "Get weather and then write code"):
+1. Call the 'Cook' tool first to gather environmental/food data.
+2. Once Cook is done, DO NOT END. Review the Cook's output.
+3. Call 'coding_agent' and provide the Cook's data to it for the next step.
+4. Only call 'taskComplete' when the final deliverable is ready.
+
 `,
   subAgents: [codingAgent, COOK,chatAgent],
+  tools:[new AgentTool({ agent: COOK }),new AgentTool({ agent: chatAgent }),new AgentTool({ agent: codingAgent }),taskComplete]
 });
 
+
+
+export const orchestratedSystem = new LoopAgent({
+  name: "Collaborative_System",
+  // This will cycle through agents until they call a 'task_complete' tool
+  subAgents: [triageAgent], 
+  maxIterations: 5,
+  
+});
 
 
 // const runner = new Runner({
